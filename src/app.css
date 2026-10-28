@@ -1,0 +1,33 @@
+body {
+    background-color: #09090b; /* Fondo negro/oscuro zombi */
+    color: #f43f5e;            /* Acento rojizo/naranja */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+input, select {
+    background-color: #18181b;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 5px;
+    width: 100%;
+}
+
+button {
+    background-color: #ea580c;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #c2410c;
+}
