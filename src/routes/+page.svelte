@@ -1,17 +1,18 @@
 <script>
 	import { onMount } from 'svelte';
 
-	let seed = 20261028;
-	let patientZeroParish = 'TARQUI';
-	let dailyBudget = 500;
-	let beta = 0.28;
+	// Variables reactivas con Svelte 5 ($state)
+	let seed = $state(20261028);
+	let patientZeroParish = $state('TARQUI');
+	let dailyBudget = $state(500);
+	let beta = $state(0.28);
 
-	let simulationRunning = false;
+	let simulationRunning = $state(false);
 	let canvas;
 	let ctx;
 
-	// Datos de métricas SEIR en tiempo real
-	let metrics = { S: 100, E: 0, I: 0, R: 0, saved: 0, cost: 0 };
+	// Métricas reactivas
+	let metrics = $state({ S: 100, E: 0, I: 0, R: 0, saved: 0, cost: 0 });
 
 	// Lista de parroquias/sectores y sus coordenadas isométricas en la rejilla
 	const parishes = [
@@ -34,13 +35,12 @@
 				y: p.gy + (Math.random() * 1.6 - 0.8),
 				vx: (Math.random() - 0.5) * 0.03,
 				vy: (Math.random() - 0.5) * 0.03,
-				state: 'S', // S: Susceptible, E: Expuesto, I: Infectado, R: Recuperado
+				state: 'S',
 				parish: p.id
 			});
 		}
 	}
 
-	// Transformación Isométrica (Grid X/Y a Pantalla Screen X/Y)
 	function toIso(gx, gy, originX, originY, tileW = 48, tileH = 24) {
 		const screenX = originX + (gx - gy) * (tileW / 2);
 		const screenY = originY + (gx + gy) * (tileH / 2);
@@ -56,7 +56,7 @@
 		const tileW = 54;
 		const tileH = 27;
 
-		// 1. DIBUJAR TERRENO ISOMÉTRICO (Grid 8x8 estilo Pixel Art)
+		// 1. Dibujar terreno isométrico
 		for (let gx = 0; gx < 8; gx++) {
 			for (let gy = 0; gy < 8; gy++) {
 				const pos = toIso(gx, gy, originX, originY, tileW, tileH);
@@ -75,19 +75,16 @@
 			}
 		}
 
-		// 2. DIBUJAR EDIFICIOS Y SECTORES DE MANTA
+		// 2. Dibujar edificios de Manta
 		parishes.forEach((p) => {
 			const pos = toIso(p.gx, p.gy, originX, originY, tileW, tileH);
 
-			// Sombra de los edificios
 			ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
 			ctx.beginPath();
 			ctx.ellipse(pos.x, pos.y + 10, 25, 12, 0, 0, Math.PI * 2);
 			ctx.fill();
 
-			// Bloques Isométricos (Edificios estilo Voxel)
 			const h = 28;
-			// Cara Izquierda
 			ctx.fillStyle = p.color;
 			ctx.beginPath();
 			ctx.moveTo(pos.x - 20, pos.y);
@@ -96,7 +93,6 @@
 			ctx.lineTo(pos.x - 20, pos.y - h);
 			ctx.fill();
 
-			// Cara Derecha
 			ctx.fillStyle = '#0284c7';
 			ctx.beginPath();
 			ctx.moveTo(pos.x, pos.y + 10);
@@ -105,7 +101,6 @@
 			ctx.lineTo(pos.x, pos.y + 10 - h);
 			ctx.fill();
 
-			// Techo
 			ctx.fillStyle = '#38bdf8';
 			ctx.beginPath();
 			ctx.moveTo(pos.x, pos.y - h);
@@ -114,14 +109,13 @@
 			ctx.lineTo(pos.x - 20, pos.y - 10 - h);
 			ctx.fill();
 
-			// Etiqueta del sector
 			ctx.fillStyle = '#f8fafc';
 			ctx.font = 'bold 11px sans-serif';
 			ctx.textAlign = 'center';
 			ctx.fillText(p.name, pos.x, pos.y - h - 14);
 		});
 
-		// 3. ACTUALIZAR Y DIBUJAR AGENTES (Personas en Isométrico)
+		// 3. Actualizar agentes y contagios
 		let sCount = 0, eCount = 0, iCount = 0, rCount = 0;
 
 		agents.forEach((ag) => {
@@ -129,11 +123,9 @@
 				ag.x += ag.vx;
 				ag.y += ag.vy;
 
-				// Limites de la isla
 				if (ag.x < 0.5 || ag.x > 7.5) ag.vx *= -1;
 				if (ag.y < 0.5 || ag.y > 7.5) ag.vy *= -1;
 
-				// Infección por cercanía
 				if (ag.state === 'I') {
 					agents.forEach((other) => {
 						if (other.state === 'S') {
@@ -154,14 +146,13 @@
 
 			const pos = toIso(ag.x, ag.y, originX, originY, tileW, tileH);
 
-			// Sprite de persona estilo Pixel Art
 			ctx.beginPath();
 			ctx.arc(pos.x, pos.y - 4, 4, 0, Math.PI * 2);
 
-			if (ag.state === 'S') ctx.fillStyle = '#10b981'; // Susceptible (Verde)
-			else if (ag.state === 'E') ctx.fillStyle = '#f59e0b'; // Expuesto (Amarillo)
-			else if (ag.state === 'I') ctx.fillStyle = '#ef4444'; // Infectado Zombi (Rojo)
-			else ctx.fillStyle = '#3b82f6'; // Recuperado (Azul)
+			if (ag.state === 'S') ctx.fillStyle = '#10b981';
+			else if (ag.state === 'E') ctx.fillStyle = '#f59e0b';
+			else if (ag.state === 'I') ctx.fillStyle = '#ef4444';
+			else ctx.fillStyle = '#3b82f6';
 
 			ctx.fill();
 			ctx.strokeStyle = '#000';
@@ -169,20 +160,47 @@
 			ctx.stroke();
 		});
 
-		metrics = { S: sCount, E: eCount, I: iCount, R: rCount, saved: Math.floor(rCount * 18.5), cost: simulationRunning ? metrics.cost + 5 : metrics.cost };
+		// Actualizar métricas reactivas
+		metrics = {
+			S: sCount,
+			E: eCount,
+			I: iCount,
+			R: rCount,
+			saved: Math.floor(rCount * 18.5),
+			cost: simulationRunning ? metrics.cost + 5 : metrics.cost
+		};
 
 		requestAnimationFrame(renderMap);
 	}
 
-	function startSimulation() {
+	async function startSimulation() {
 		initAgents();
-		// Infectar el sector seleccionado
 		agents.forEach((ag) => {
 			if (ag.parish === patientZeroParish && Math.random() < 0.6) {
 				ag.state = 'I';
 			}
 		});
 		simulationRunning = true;
+
+		try {
+			const response = await fetch('http://localhost:8080/api/simulate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					seed: Number(seed),
+					patientZero: patientZeroParish,
+					budget: Number(dailyBudget),
+					beta: Number(beta)
+				})
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("Respuesta del servidor Go:", data);
+			}
+		} catch (error) {
+			console.log("Modo autónomo visual activado (Backend de Go no detectado en localhost:8080).");
+		}
 	}
 
 	onMount(() => {
@@ -234,7 +252,7 @@
 				<input type="range" min="0.05" max="0.95" step="0.01" bind:value={beta} />
 			</div>
 
-			<button class="launch-btn" on:click={startSimulation}>
+			<button class="launch-btn" onclick={startSimulation}>
 				{simulationRunning ? '🔄 REINICIAR SIMULACIÓN' : '⚡ INICIAR SIMULACIÓN ISOMÉTRICA'}
 			</button>
 		</div>
@@ -247,7 +265,7 @@
 		</div>
 	</aside>
 
-	<!-- ÁREA CENTRAL: VISTA ISOMÉTRICA PIXEL ART -->
+	<!-- ÁREA CENTRAL: VISTA ISOMÉTRICA -->
 	<main class="main-viewport">
 		<header class="viewport-header">
 			<h2>🎮 Simulación Isométrica Táctica — Manta Pixel World</h2>
