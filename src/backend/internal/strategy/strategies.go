@@ -35,6 +35,9 @@ type RandomInterventionStrategy struct{}
 func (s *RandomInterventionStrategy) Name() string { return "randomIntervention" }
 
 func (s *RandomInterventionStrategy) Decide(day int, nodes []domain.Node, g *domain.Graph, req domain.SimulationRequest, rng *rand.Rand) DailyInterventionOutcome {
+	if day < 3 {
+		return DailyInterventionOutcome{ClosureActiveInParish: make(map[string]bool)}
+	}
 	outcome := DailyInterventionOutcome{
 		ClosureActiveInParish: make(map[string]bool),
 	}
@@ -72,6 +75,9 @@ type SmartContainmentStrategy struct{}
 func (s *SmartContainmentStrategy) Name() string { return "smartContainment" }
 
 func (s *SmartContainmentStrategy) Decide(day int, nodes []domain.Node, g *domain.Graph, req domain.SimulationRequest, rng *rand.Rand) DailyInterventionOutcome {
+	if day < 3 {
+		return DailyInterventionOutcome{ClosureActiveInParish: make(map[string]bool)}
+	}
 	outcome := DailyInterventionOutcome{
 		ClosureActiveInParish: make(map[string]bool),
 	}
