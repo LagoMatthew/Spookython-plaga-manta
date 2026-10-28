@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 
-	let apiUrl = $state('http://localhost:8080/simulate');
+	let apiUrl = $state('https://jbh7zauun33cwzv4lilki5j4ki0kyzay.lambda-url.us-east-1.on.aws/');
 	let seed = $state(20261028);
 	let patientZeroParish = $state('TARQUI');
 	let dailyBudget = $state(120);
